@@ -2,6 +2,25 @@
 
 Minimal named subagent tool for Pi.
 
+## Installation
+
+Install directly from GitHub with Pi:
+
+```bash
+pi install git:github.com/elpapi42/pi-minimal-subagent
+```
+
+Then restart Pi, or run `/reload` in an existing session if your Pi version supports extension reloads.
+
+For local development from this checkout:
+
+```bash
+cd /home/whitman/minimal-subagent/pi-minimal-subagents
+pi -e .
+```
+
+## Usage
+
 It registers one tool:
 
 ```json
