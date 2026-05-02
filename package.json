@@ -1,0 +1,35 @@
+{
+  "name": "pi-minimal-subagents",
+  "version": "0.1.0",
+  "description": "Minimal named subagent tool for Pi. Run one configured agent on one task.",
+  "type": "module",
+  "keywords": [
+    "pi",
+    "subagent",
+    "pi-package"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@mariozechner/pi-agent-core": "*",
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*",
+    "@sinclair/typebox": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "README.md",
+    "package.json",
+    "src"
+  ]
+}
