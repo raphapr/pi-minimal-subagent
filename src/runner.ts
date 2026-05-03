@@ -56,6 +56,26 @@ function mergeExtensions(settings: Settings, agent: AgentConfig): string[] {
   return [...new Set([...(settings.extensions ?? []), ...(agent.extensions ?? [])])];
 }
 
+function buildChildEnv(settings: Settings): NodeJS.ProcessEnv {
+  const inheritedEnv: NodeJS.ProcessEnv = { ...process.env };
+
+  if (isWindows) {
+    for (const [configuredKey, configuredValue] of Object.entries(settings.environment)) {
+      const normalizedKey = configuredKey.toLowerCase();
+      for (const key of Object.keys(inheritedEnv)) {
+        if (key.toLowerCase() === normalizedKey) delete inheritedEnv[key];
+      }
+      inheritedEnv[configuredKey] = configuredValue;
+    }
+    return inheritedEnv;
+  }
+
+  return {
+    ...inheritedEnv,
+    ...settings.environment,
+  };
+}
+
 function buildPiArgs(opts: {
   task: string;
   systemPromptPath: string | null;
@@ -131,7 +151,7 @@ export async function runSubagent(opts: RunSubagentOptions): Promise<SubagentRes
         cwd,
         shell: false,
         stdio: ["pipe", "pipe", "pipe"],
-        env: process.env,
+        env: buildChildEnv(settings),
       });
 
       proc.stdin.on("error", () => {

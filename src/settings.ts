@@ -26,6 +26,42 @@ export function resolveConfiguredPath(value: string, baseDir: string): string {
   return path.resolve(baseDir, value);
 }
 
+function parseEnvironment(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+
+  const environment: Record<string, string> = {};
+  for (const [rawKey, rawValue] of Object.entries(value as Record<string, unknown>)) {
+    const key = rawKey.trim();
+    if (!key || key.includes("=") || key.includes("\0") || typeof rawValue !== "string" || rawValue.includes("\0")) continue;
+    environment[key] = rawValue;
+  }
+  return environment;
+}
+
+function mergeEnvironment(
+  base: Record<string, string> | undefined,
+  overrides: Record<string, string> | undefined,
+): Record<string, string> {
+  const environment = { ...(base ?? {}) };
+  if (!overrides) return environment;
+
+  if (process.platform === "win32") {
+    for (const [overrideKey, overrideValue] of Object.entries(overrides)) {
+      const normalizedKey = overrideKey.toLowerCase();
+      for (const key of Object.keys(environment)) {
+        if (key.toLowerCase() === normalizedKey) delete environment[key];
+      }
+      environment[overrideKey] = overrideValue;
+    }
+    return environment;
+  }
+
+  return {
+    ...environment,
+    ...overrides,
+  };
+}
+
 function readSettings(filePath: string, baseDir: string): Partial<Settings> {
   const raw = readJsonSafe(filePath)[SETTINGS_KEY];
   if (!raw || typeof raw !== "object") return {};
@@ -47,17 +83,25 @@ function readSettings(filePath: string, baseDir: string): Partial<Settings> {
       .map((entry) => resolveConfiguredPath(entry.trim(), baseDir));
   }
 
+  const environment = parseEnvironment(config.environment);
+  if (environment) {
+    settings.environment = environment;
+  }
+
   return settings;
 }
 
 export function resolveSettings(cwd: string): Settings {
   const globalDir = getAgentDir();
   const projectDir = path.join(cwd, ".pi");
+  const globalSettings = readSettings(path.join(globalDir, "settings.json"), globalDir);
+  const projectSettings = readSettings(path.join(projectDir, "settings.json"), projectDir);
 
   return {
     model: null,
     extensions: null,
-    ...readSettings(path.join(globalDir, "settings.json"), globalDir),
-    ...readSettings(path.join(projectDir, "settings.json"), projectDir),
+    ...globalSettings,
+    ...projectSettings,
+    environment: mergeEnvironment(globalSettings.environment, projectSettings.environment),
   };
 }

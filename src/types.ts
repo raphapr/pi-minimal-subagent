@@ -18,6 +18,7 @@ export interface AgentConfig {
 export interface Settings {
   model: string | null;
   extensions: string[] | null;
+  environment: Record<string, string>;
 }
 
 export interface UsageStats {

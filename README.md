@@ -65,7 +65,11 @@ Global settings live in Pi's agent settings file (usually `~/.pi/agent/settings.
     "extensions": [
       "git:git@github.com:elpapi42/pi-codemapper.git",
       "npm:pi-rtk-optimizer"
-    ]
+    ],
+    "environment": {
+      "MY_EXTENSION_MODE": "subagent",
+      "SERVICE_BASE_URL": "https://example.test"
+    }
   }
 }
 ```
@@ -79,6 +83,14 @@ Global settings live in Pi's agent settings file (usually `~/.pi/agent/settings.
 - non-empty array: child subagents run with `--no-extensions`, then explicitly load those extensions.
 
 Agent frontmatter `extensions` are always appended as explicit `--extension` entries. With `extensions: null`, they are added on top of normal Pi extension loading; with `[]` or a non-empty array, they are the only additions besides the configured list.
+
+`environment` is an optional object of environment variables for spawned subagents. Each key is an environment variable name and each value should be a string. Non-string entries and invalid or empty variable names are ignored; empty string values are allowed when intentional.
+
+Configured `environment` values apply to all subagent runs in the resolved global/project scope. Global and project `environment` objects merge by variable name, with project values overriding global values for the same name.
+
+Subagents still inherit the parent Pi process environment. The configured `environment` values are merged on top of that inherited environment, so configured names add new variables or override inherited values, while omitted names continue to inherit normally. If `environment` is omitted, subagents keep today's inherited-environment behavior.
+
+This is a minimal escape hatch for env-configured extensions. It is not per-agent configuration, not per-invocation configuration, not an isolated environment mode, and not a secret masking, auditing, or secrets-management system. Configured values affect spawned subagents only; they do not change the parent/main agent environment.
 
 The extension does not block recursive usage. If a user loads this extension inside a subagent, nested subagent calls are allowed.
 
